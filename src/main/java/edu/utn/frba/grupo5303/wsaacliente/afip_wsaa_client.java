@@ -52,11 +52,18 @@ import org.apache.axis.encoding.XMLType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import java.util.List;
 import javax.xml.rpc.ParameterMode;
-import org.bouncycastle.cms.CMSProcessable;
+import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
+import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.util.Store;
 
 public class afip_wsaa_client {
 
@@ -137,22 +144,42 @@ public class afip_wsaa_client {
         // Create CMS Message
         //
         try {
-            // Create a new empty CMS Message
+            List certList = new ArrayList();
+
+            certList.add(pCertificate);
+
+            Store certs = new JcaCertStore(certList);
+
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+            ContentSigner sha1Signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(pKey);
 
+            gen.addSignerInfoGenerator(
+                    new JcaSignerInfoGeneratorBuilder(
+                            new JcaDigestCalculatorProviderBuilder().setProvider("BC").build())
+                    .build(sha1Signer, pCertificate));
+
+            gen.addCertificates(certs);
+
+//            CMSSignedData sigData = gen.generate(msg, false);
+
+            // Create a new empty CMS Message
+//            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+//
             // Add a Signer to the Message
-            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
+//            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
 
-            // Add the Certificate to the Message
-            gen.addCertificatesAndCRLs(cstore);
+//            // Add the Certificate to the Message
+//            gen.addCertificatesAndCRLs(cstore);
+//            gen.addCertificates((Store) cstore);
 
-            // Add the data (XML) to the Message
-            CMSProcessable data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
+//            // Add the data (XML) to the Message
+//            CMSProcessable data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
+            CMSTypedData data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
 
-            // Add a Sign of the Data to the Message
-            CMSSignedData signed = gen.generate(data, true, "BC");
+//            // Add a Sign of the Data to the Message
+//            CMSSignedData signed = gen.generate(data, true, "BC");
+            CMSSignedData signed = gen.generate(data, true);
 
-            // 
             asn1_cms = signed.getEncoded();
         } catch (Exception e) {
             e.printStackTrace();
