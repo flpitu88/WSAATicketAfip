@@ -60,7 +60,7 @@ public class wsaa_test {
             e.printStackTrace();
         }
 
-        String endpoint = config.getProperty("endpoint", "http://wsaahomo.afip.gov.ar/ws/services/LoginCms");
+        String endpoint = config.getProperty("endpoint", "https://wsaahomo.afip.gov.ar/ws/services/LoginCms");
         String service = config.getProperty("service", "test");
         String dstDN = config.getProperty("dstdn", "cn=wsaahomo,o=afip,c=ar,serialNumber=CUIT 20334428878");
 

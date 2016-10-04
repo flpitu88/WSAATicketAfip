@@ -52,6 +52,7 @@ import org.apache.axis.encoding.XMLType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import java.security.Signature;
 import java.util.List;
 import javax.xml.rpc.ParameterMode;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
@@ -64,6 +65,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
+import sun.misc.BASE64Encoder;
 
 public class afip_wsaa_client {
 
@@ -106,6 +108,8 @@ public class afip_wsaa_client {
         CertStore cstore = null;
         String LoginTicketRequest_xml;
         String SignerDN = null;
+        
+        ArrayList<X509Certificate> certList = null;
 
         //
         // Manage Keys & Certificates
@@ -123,7 +127,7 @@ public class afip_wsaa_client {
             SignerDN = pCertificate.getSubjectDN().toString();
 
             // Create a list of Certificates to include in the final CMS
-            ArrayList<X509Certificate> certList = new ArrayList<X509Certificate>();
+            certList = new ArrayList<X509Certificate>();
             certList.add(pCertificate);
 
             if (Security.getProvider("BC") == null) {
@@ -144,43 +148,38 @@ public class afip_wsaa_client {
         // Create CMS Message
         //
         try {
-            List certList = new ArrayList();
 
-            certList.add(pCertificate);
-
+//            Security.addProvider(new BouncyCastleProvider());
+            //Sign
+            Signature signature = Signature.getInstance("SHA1withRSA", "BC");
+            signature.initSign(pKey);
+            signature.update(LoginTicketRequest_xml.getBytes());
+            //Build CMS
+//            List certList = new ArrayList();
+            CMSTypedData msg = new CMSProcessableByteArray(signature.sign());
+//            certList.add(pCertificate);
             Store certs = new JcaCertStore(certList);
-
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
             ContentSigner sha1Signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(pKey);
-
             gen.addSignerInfoGenerator(
                     new JcaSignerInfoGeneratorBuilder(
-                            new JcaDigestCalculatorProviderBuilder().setProvider("BC").build())
+                            new JcaDigestCalculatorProviderBuilder()
+                            .setProvider("BC")
+                            .build())
                     .build(sha1Signer, pCertificate));
+            gen.addCertificates(certs);            
+            CMSSignedData sigData = gen.generate(msg, true);
 
-            gen.addCertificates(certs);
+            BASE64Encoder encoder = new BASE64Encoder();
 
-//            CMSSignedData sigData = gen.generate(msg, false);
+            String signedContent = encoder.encode((byte[]) sigData.getSignedContent().getContent());
+            System.out.println("Signed content: " + signedContent + "\n");
 
-            // Create a new empty CMS Message
-//            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-//
-            // Add a Signer to the Message
-//            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
+            String envelopedData = encoder.encode(sigData.getEncoded());
+            System.out.println("Enveloped data: " + envelopedData);
 
-//            // Add the Certificate to the Message
-//            gen.addCertificatesAndCRLs(cstore);
-//            gen.addCertificates((Store) cstore);
+            asn1_cms = sigData.getEncoded();
 
-//            // Add the data (XML) to the Message
-//            CMSProcessable data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
-            CMSTypedData data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
-
-//            // Add a Sign of the Data to the Message
-//            CMSSignedData signed = gen.generate(data, true, "BC");
-            CMSSignedData signed = gen.generate(data, true);
-
-            asn1_cms = signed.getEncoded();
         } catch (Exception e) {
             e.printStackTrace();
         }
