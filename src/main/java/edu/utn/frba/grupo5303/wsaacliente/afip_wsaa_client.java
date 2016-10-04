@@ -49,23 +49,16 @@ import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.encoding.XMLType;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
-import java.security.Signature;
-import java.util.List;
 import javax.xml.rpc.ParameterMode;
-import org.bouncycastle.cert.jcajce.JcaCertStore;
+import org.bouncycastle.cms.CMSProcessable;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
-import org.bouncycastle.cms.CMSTypedData;
-import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
-import org.bouncycastle.util.Store;
-import sun.misc.BASE64Encoder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 
 public class afip_wsaa_client {
 
@@ -108,7 +101,7 @@ public class afip_wsaa_client {
         CertStore cstore = null;
         String LoginTicketRequest_xml;
         String SignerDN = null;
-        
+
         ArrayList<X509Certificate> certList = null;
 
         //
@@ -151,34 +144,51 @@ public class afip_wsaa_client {
 
 //            Security.addProvider(new BouncyCastleProvider());
             //Sign
-            Signature signature = Signature.getInstance("SHA1withRSA", "BC");
-            signature.initSign(pKey);
-            signature.update(LoginTicketRequest_xml.getBytes());
-            //Build CMS
-//            List certList = new ArrayList();
-            CMSTypedData msg = new CMSProcessableByteArray(signature.sign());
-//            certList.add(pCertificate);
-            Store certs = new JcaCertStore(certList);
+//            Signature signature = Signature.getInstance("SHA1withRSA", "BC");
+//            signature.initSign(pKey);
+//            signature.update(LoginTicketRequest_xml.getBytes());
+//            //Build CMS
+////            List certList = new ArrayList();
+//            CMSTypedData msg = new CMSProcessableByteArray(signature.sign());
+////            certList.add(pCertificate);
+//            Store certs = new JcaCertStore(certList);
+//            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+//            ContentSigner sha1Signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(pKey);
+//            gen.addSignerInfoGenerator(
+//                    new JcaSignerInfoGeneratorBuilder(
+//                            new JcaDigestCalculatorProviderBuilder()
+//                            .setProvider("BC")
+//                            .build())
+//                    .build(sha1Signer, pCertificate));
+//            gen.addCertificates(certs);            
+//            CMSSignedData sigData = gen.generate(msg, true);
+//
+//            BASE64Encoder encoder = new BASE64Encoder();
+//
+//            String signedContent = encoder.encode((byte[]) sigData.getSignedContent().getContent());
+//            System.out.println("Signed content: " + signedContent + "\n");
+//
+//            String envelopedData = encoder.encode(sigData.getEncoded());
+//            System.out.println("Enveloped data: " + envelopedData);
+//
+//            asn1_cms = sigData.getEncoded();
+            // Create a new empty CMS Message
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-            ContentSigner sha1Signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(pKey);
-            gen.addSignerInfoGenerator(
-                    new JcaSignerInfoGeneratorBuilder(
-                            new JcaDigestCalculatorProviderBuilder()
-                            .setProvider("BC")
-                            .build())
-                    .build(sha1Signer, pCertificate));
-            gen.addCertificates(certs);            
-            CMSSignedData sigData = gen.generate(msg, true);
 
-            BASE64Encoder encoder = new BASE64Encoder();
+            // Add a Signer to the Message
+            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
 
-            String signedContent = encoder.encode((byte[]) sigData.getSignedContent().getContent());
-            System.out.println("Signed content: " + signedContent + "\n");
+            // Add the Certificate to the Message
+            gen.addCertificatesAndCRLs(cstore);
 
-            String envelopedData = encoder.encode(sigData.getEncoded());
-            System.out.println("Enveloped data: " + envelopedData);
+            // Add the data (XML) to the Message
+            CMSProcessable data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
 
-            asn1_cms = sigData.getEncoded();
+            // Add a Sign of the Data to the Message
+            CMSSignedData signed = gen.generate(data, true, "BC");
+
+            // 
+            asn1_cms = signed.getEncoded();
 
         } catch (Exception e) {
             e.printStackTrace();
