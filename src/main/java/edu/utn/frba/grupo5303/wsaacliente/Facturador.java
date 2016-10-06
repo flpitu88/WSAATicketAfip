@@ -5,68 +5,199 @@
  */
 package edu.utn.frba.grupo5303.wsaacliente;
 
+import afip.wsdl.FEAuthRequest;
+import afip.wsdl.FECAERequest;
+import afip.wsdl.FECAESolicitar;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.CertStore;
+import java.security.cert.CertStoreException;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import javax.xml.rpc.ParameterMode;
+import javax.xml.rpc.ServiceException;
+import org.apache.axis.client.Call;
+import org.apache.axis.client.Service;
+import org.apache.axis.encoding.Base64;
+import org.apache.axis.encoding.XMLType;
+import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSProcessable;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  *
  * @author flavio
  */
 public class Facturador {
-
-    private String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNTU4ODk5MjUiIHNyYz0iQ049d3NhYWhvbW8sIE89QUZJUCwgQz1BUiwgU0VSSUFMTlVNQkVSPUNVSVQgMzM2OTM0NTAyMzkiIGdlbl90aW1lPSIxNDc1NjgzOTQ4IiBleHBfdGltZT0iMTQ3NTcyNzIwOCIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiLz4KICAgIDxvcGVyYXRpb24gdmFsdWU9ImdyYW50ZWQiIHR5cGU9ImxvZ2luIj4KICAgICAgICA8bG9naW4gdWlkPSJTRVJJQUxOVU1CRVI9Q1VJVCAyMDMzNDQyODg3OCwgQ049ZW52aW9saWJyZSIgc2VydmljZT0id3NmZSIgcmVnbWV0aG9kPSIyMiIgZW50aXR5PSIzMzY5MzQ1MDIzOSIgYXV0aG1ldGhvZD0iY21zIj4KICAgICAgICAgICAgPHJlbGF0aW9ucz4KICAgICAgICAgICAgICAgIDxyZWxhdGlvbiByZWx0eXBlPSI0IiBrZXk9IjIwMzM0NDI4ODc4Ii8+CiAgICAgICAgICAgIDwvcmVsYXRpb25zPgogICAgICAgIDwvbG9naW4+CiAgICA8L29wZXJhdGlvbj4KPC9zc28+Cgo=";
-    private String sign = "Mjck9/998qD39IbPn+E6LD30lQZ+Iy7E7mScHejrg8k8n7SmK1iUUtL0q7dC+zkj0QF6Iud7YShhqJ2CkbiAtNm0J3J21kwpEzlfFJBd2yv9W+ObaqmAfImQjzmQCwtPol3km0q0Tko7GE5ZuXo4Ch4uOF2AxYSlxVSZtOh0GhA=";
-
+    
+    private String token;
+    private String sign;
+    private String p12file;
+    private String p12pass;
+    private String signer;
+    private String dstDN;
+    private String service;
+    
     public Facturador() {
     }
-
-    public Facturador(String token, String sign) {
+    
+    public Facturador(String token, String sign, String p12file, String p12pass, String signer,
+            String dstDN, String service) {
+        this.p12file = p12file;
+        this.p12pass = p12pass;
+        this.signer = signer;
+        this.dstDN = dstDN;
+        this.service = service;
         this.token = token;
         this.sign = sign;
     }
-
+    
     public String getToken() {
         return token;
     }
-
+    
     public void setToken(String token) {
         this.token = token;
     }
-
+    
     public String getSign() {
         return sign;
     }
-
+    
     public void setSign(String sign) {
         this.sign = sign;
     }
-
-    public String solicitarFECAE() {
-        String pedido = generarXMLPedido();
-        
-        // Create a new empty CMS Message
-            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-
-            // Add a Signer to the Message
-            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
-
-            // Add the Certificate to the Message
-            gen.addCertificatesAndCRLs(cstore);
-
-            // Add the data (XML) to the Message
-            CMSProcessable data = new CMSProcessableByteArray(LoginTicketRequest_xml.getBytes());
-
-            // Add a Sign of the Data to the Message
-            CMSSignedData signed = gen.generate(data, true, "BC");
-
-            // 
-            asn1_cms = signed.getEncoded();
+    
+    public String getP12file() {
+        return p12file;
     }
+    
+    public void setP12file(String p12file) {
+        this.p12file = p12file;
+    }
+    
+    public String getP12pass() {
+        return p12pass;
+    }
+    
+    public void setP12pass(String p12pass) {
+        this.p12pass = p12pass;
+    }
+    
+    public String getSigner() {
+        return signer;
+    }
+    
+    public void setSigner(String signer) {
+        this.signer = signer;
+    }
+    
+    public String getDstDN() {
+        return dstDN;
+    }
+    
+    public void setDstDN(String dstDN) {
+        this.dstDN = dstDN;
+    }
+    
+    public String getService() {
+        return service;
+    }
+    
+    public void setService(String service) {
+        this.service = service;
+    }
+    
+    public String solicitarFECAE() throws CertStoreException, CMSException, NoSuchAlgorithmException, NoSuchProviderException, IOException, ServiceException {
+        PrivateKey pKey = null;
+        X509Certificate pCertificate = null;
+        byte[] asn1_cms = null;
+        CertStore cstore = null;
+        
+        ArrayList<X509Certificate> certList = null;
 
+        //
+        // Manage Keys & Certificates
+        //
+        try {
+            // Create a keystore using keys from the pkcs#12 p12file
+            KeyStore ks = KeyStore.getInstance("pkcs12");
+            FileInputStream p12stream = new FileInputStream(p12file);
+            ks.load(p12stream, p12pass.toCharArray());
+            p12stream.close();
+
+            // Get Certificate & Private key from KeyStore
+            pKey = (PrivateKey) ks.getKey(signer, p12pass.toCharArray());
+            pCertificate = (X509Certificate) ks.getCertificate(signer);
+
+            // Create a list of Certificates to include in the final CMS
+            certList = new ArrayList<X509Certificate>();
+            certList.add(pCertificate);
+            
+            if (Security.getProvider("BC") == null) {
+                Security.addProvider(new BouncyCastleProvider());
+            }
+            
+            cstore = CertStore.getInstance("Collection", new CollectionCertStoreParameters(certList), "BC");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        String pedido = generarXMLPedido();
+
+        // Create a new empty CMS Message
+        CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+
+        // Add a Signer to the Message
+        gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
+
+        // Add the Certificate to the Message
+        gen.addCertificatesAndCRLs(cstore);
+
+        // Add the data (XML) to the Message
+        CMSProcessable data = new CMSProcessableByteArray(pedido.getBytes());
+        
+        FECAESolicitar sol = new FECAESolicitar();
+        sol.setAuth(new FEAuthRequest());
+        sol.setFeCAEReq(new FECAERequest());        
+
+        // Add a Sign of the Data to the Message
+        CMSSignedData signed = gen.generate(data, true, "BC");
+
+        // 
+        asn1_cms = signed.getEncoded();
+        
+        Service service = new Service();
+        Call call = (Call) service.createCall();
+
+        //
+        // Prepare the call for the Web service
+        //
+        call.setTargetEndpointAddress(new java.net.URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx"));
+        call.setOperationName("FECAESolicitar");
+        call.addParameter("request", XMLType.XSD_STRING, ParameterMode.IN);
+        call.setReturnType(XMLType.XSD_STRING);
+
+        //
+        // Make the actual call and assign the answer to a String
+        //
+        String response = (String) call.invoke(new Object[]{
+            Base64.encode(asn1_cms)});
+        
+        return response;
+    }
+    
     public String generarXMLPedido() {
-        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\">"
+        return "<soap:Envelope xmlns:soap=”http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=”http://ar.gov.afip.dif.fev1/”>"
                 + "<soapenv:Header/>"
                 + "<soapenv:Body>"
                 + "<ar:FECAESolicitar>"
@@ -128,5 +259,5 @@ public class Facturador {
                 + "</soapenv:Body>"
                 + "</soapenv:Envelope>";
     }
-
+    
 }

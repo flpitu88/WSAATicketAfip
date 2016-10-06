@@ -38,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
+import org.apache.axis.encoding.Base64;
 
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
@@ -101,7 +102,18 @@ public class wsaa_test {
 
             System.out.println("TOKEN: " + token);
             System.out.println("SIGN: " + sign);
+
+            //
+            // Make the actual call and assign the answer to a String
+            //
+            byte[] TiposComprobantes_xml_cms = afip_wsaa_client.create_cmsTiposCompro(p12file, p12pass,
+                    signer, dstDN, service, token, sign, "20334428878");
+
+            LoginTicketResponse = afip_wsaa_client.invoke_wsfe(TiposComprobantes_xml_cms, "https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+
+            System.out.println(LoginTicketResponse);
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println(e);
         }
 

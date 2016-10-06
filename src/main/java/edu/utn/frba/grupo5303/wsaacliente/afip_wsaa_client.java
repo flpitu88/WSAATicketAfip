@@ -50,15 +50,19 @@ import org.apache.axis.client.Service;
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.encoding.XMLType;
 
-
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import javax.xml.rpc.ParameterMode;
+import javax.xml.rpc.ServiceException;
+import javax.xml.soap.MimeHeaders;
+import org.apache.axis.MessageContext;
+import org.apache.axis.SOAPPart;
 import org.bouncycastle.cms.CMSProcessable;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 
 public class afip_wsaa_client {
 
@@ -142,36 +146,6 @@ public class afip_wsaa_client {
         //
         try {
 
-//            Security.addProvider(new BouncyCastleProvider());
-            //Sign
-//            Signature signature = Signature.getInstance("SHA1withRSA", "BC");
-//            signature.initSign(pKey);
-//            signature.update(LoginTicketRequest_xml.getBytes());
-//            //Build CMS
-////            List certList = new ArrayList();
-//            CMSTypedData msg = new CMSProcessableByteArray(signature.sign());
-////            certList.add(pCertificate);
-//            Store certs = new JcaCertStore(certList);
-//            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-//            ContentSigner sha1Signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(pKey);
-//            gen.addSignerInfoGenerator(
-//                    new JcaSignerInfoGeneratorBuilder(
-//                            new JcaDigestCalculatorProviderBuilder()
-//                            .setProvider("BC")
-//                            .build())
-//                    .build(sha1Signer, pCertificate));
-//            gen.addCertificates(certs);            
-//            CMSSignedData sigData = gen.generate(msg, true);
-//
-//            BASE64Encoder encoder = new BASE64Encoder();
-//
-//            String signedContent = encoder.encode((byte[]) sigData.getSignedContent().getContent());
-//            System.out.println("Signed content: " + signedContent + "\n");
-//
-//            String envelopedData = encoder.encode(sigData.getEncoded());
-//            System.out.println("Enveloped data: " + envelopedData);
-//
-//            asn1_cms = sigData.getEncoded();
             // Create a new empty CMS Message
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
 
@@ -228,5 +202,137 @@ public class afip_wsaa_client {
 
         //System.out.println("TRA: " + LoginTicketRequest_xml);
         return (LoginTicketRequest_xml);
+    }
+
+    private static String getXmlFEParamGetTiposCbte(String aToken, String aSing, String aCuit) {
+
+        String FEParamGetTiposCbte_xml;
+
+        FEParamGetTiposCbte_xml = "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">"
+                + "<soap12:Body>"
+                + "<FEParamGetTiposCbte xmlns=\"http://ar.gov.afip.dif.FEV1/\">"
+                + "<Auth>"
+                + "<Token>" + aToken + "</Token>"
+                + "<Sign>" + aSing + "</Sign>"
+                + "<Cuit>" + aCuit + "</Cuit>"
+                + "</Auth>"
+                + "</FEParamGetTiposCbte>"
+                + "</soap12:Body>"
+                + "</soap12:Envelope>";
+
+        return (FEParamGetTiposCbte_xml);
+    }
+
+    //
+    // Create the CMS Message
+    //
+    public static byte[] create_cmsTiposCompro(String p12file, String p12pass,
+            String signer, String dstDN, String service,
+            String token, String sign, String cuit) {
+
+        PrivateKey pKey = null;
+        X509Certificate pCertificate = null;
+        byte[] asn1_cms = null;
+        CertStore cstore = null;
+        String PedidoTiposComprobantes_xml;
+
+        ArrayList<X509Certificate> certList = null;
+
+        //
+        // Manage Keys & Certificates
+        //
+        try {
+            // Create a keystore using keys from the pkcs#12 p12file
+            KeyStore ks = KeyStore.getInstance("pkcs12");
+            FileInputStream p12stream = new FileInputStream(p12file);
+            ks.load(p12stream, p12pass.toCharArray());
+            p12stream.close();
+
+            // Get Certificate & Private key from KeyStore
+            pKey = (PrivateKey) ks.getKey(signer, p12pass.toCharArray());
+            pCertificate = (X509Certificate) ks.getCertificate(signer);
+
+            // Create a list of Certificates to include in the final CMS
+            certList = new ArrayList<X509Certificate>();
+            certList.add(pCertificate);
+
+            if (Security.getProvider("BC") == null) {
+                Security.addProvider(new BouncyCastleProvider());
+            }
+
+            cstore = CertStore.getInstance("Collection", new CollectionCertStoreParameters(certList), "BC");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //
+        // Create XML Message
+        // 
+        PedidoTiposComprobantes_xml = getXmlFEParamGetTiposCbte(token, sign, cuit);
+
+        //
+        // Create CMS Message
+        //
+        try {
+
+            // Create a new empty CMS Message
+            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+
+            // Add a Signer to the Message
+            gen.addSigner(pKey, pCertificate, CMSSignedDataGenerator.DIGEST_SHA1);
+
+            // Add the Certificate to the Message
+            gen.addCertificatesAndCRLs(cstore);
+
+            // Add the data (XML) to the Message
+            CMSProcessable data = new CMSProcessableByteArray(PedidoTiposComprobantes_xml.getBytes());
+
+            // Add a Sign of the Data to the Message
+            CMSSignedData signed = gen.generate(data, true, "BC");
+
+            // 
+            asn1_cms = signed.getEncoded();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return (asn1_cms);
+    }
+
+    static String invoke_wsfe(byte[] PedidoComprobantes, String endpoint) throws Exception {
+
+        String LoginTicketResponse = null;
+        try {
+
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+
+            //
+            // Prepare the call for the Web service
+            //
+            call.setTargetEndpointAddress(new java.net.URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx"));
+            call.setOperationName("FEParamGetTiposCbte");
+            call.addParameter("request", XMLType.XSD_STRING, ParameterMode.IN);
+            call.setReturnType(XMLType.XSD_STRING);
+
+            call.setSOAPActionURI("http://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte");
+            call.setProperty(
+                    org.apache.axis.client.Call.SESSION_MAINTAIN_PROPERTY,
+                    new Boolean(true));
+            call.setProperty(
+                    org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE2,
+                    "\r\nSOAPAction: " + call.getSOAPActionURI());
+
+            //
+            // Make the actual call and assign the answer to a String
+            //
+            LoginTicketResponse = (String) call.invoke(new Object[]{
+                Base64.encode(PedidoComprobantes)});
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return (LoginTicketResponse);
     }
 }
