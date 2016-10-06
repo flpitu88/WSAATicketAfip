@@ -51,7 +51,12 @@ import org.apache.axis.encoding.Base64;
 import org.apache.axis.encoding.XMLType;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.rmi.RemoteException;
 import javax.xml.rpc.ParameterMode;
 import javax.xml.rpc.ServiceException;
@@ -305,30 +310,53 @@ public class afip_wsaa_client {
         String LoginTicketResponse = null;
         try {
 
-            Service service = new Service();
-            Call call = (Call) service.createCall();
+//            Service service = new Service();
+//            Call call = (Call) service.createCall();
+//
+//            //
+//            // Prepare the call for the Web service
+//            //
+//            call.setTargetEndpointAddress(new java.net.URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx"));
+//            call.setOperationName("FEParamGetTiposCbte");
+//            call.addParameter("request", XMLType.XSD_STRING, ParameterMode.IN);
+//            call.setReturnType(XMLType.XSD_STRING);
+//
+//            call.setSOAPActionURI("http://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte");
+//            call.setProperty(
+//                    org.apache.axis.client.Call.SESSION_MAINTAIN_PROPERTY,
+//                    new Boolean(true));
+//            call.setProperty(
+//                    org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE2,
+//                    "\r\nSOAPAction: " + call.getSOAPActionURI());
+//
+//            //
+//            // Make the actual call and assign the answer to a String
+//            //
+//            LoginTicketResponse = (String) call.invoke(new Object[]{
+//                Base64.encode(PedidoComprobantes)});
+            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNzczODEzMTQ0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTc5MTk0MiIgZXhwX3RpbWU9IjE0NzU4MzUyMDIiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+            String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
+            String cuit = "20334428878";
 
-            //
-            // Prepare the call for the Web service
-            //
-            call.setTargetEndpointAddress(new java.net.URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx"));
-            call.setOperationName("FEParamGetTiposCbte");
-            call.addParameter("request", XMLType.XSD_STRING, ParameterMode.IN);
-            call.setReturnType(XMLType.XSD_STRING);
+            String soapXml = getXmlFEParamGetTiposCbte(token, sign, cuit);
+            URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+            URLConnection conn = url.openConnection();
 
-            call.setSOAPActionURI("http://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte");
-            call.setProperty(
-                    org.apache.axis.client.Call.SESSION_MAINTAIN_PROPERTY,
-                    new Boolean(true));
-            call.setProperty(
-                    org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE2,
-                    "\r\nSOAPAction: " + call.getSOAPActionURI());
-
-            //
-            // Make the actual call and assign the answer to a String
-            //
-            LoginTicketResponse = (String) call.invoke(new Object[]{
-                Base64.encode(PedidoComprobantes)});
+// Set the necessary header fields
+            conn.setRequestProperty("SOAPAction", "https://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte");
+            conn.setRequestProperty("Content-type", "application/soap+xml;charset=UTF-8;action=\"https://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte\"");
+            conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+            conn.setDoOutput(true);
+// Send the request
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(soapXml);
+            wr.flush();
+// Read the response
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            while ((line = rd.readLine()) != null) {
+                System.out.println(line);
+                /*jEdit: print(line); */ }
 
         } catch (Exception e) {
             e.printStackTrace();

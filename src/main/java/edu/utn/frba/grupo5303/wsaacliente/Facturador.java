@@ -5,9 +5,6 @@
  */
 package edu.utn.frba.grupo5303.wsaacliente;
 
-import afip.wsdl.FEAuthRequest;
-import afip.wsdl.FECAERequest;
-import afip.wsdl.FECAESolicitar;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -166,9 +163,9 @@ public class Facturador {
         // Add the data (XML) to the Message
         CMSProcessable data = new CMSProcessableByteArray(pedido.getBytes());
         
-        FECAESolicitar sol = new FECAESolicitar();
-        sol.setAuth(new FEAuthRequest());
-        sol.setFeCAEReq(new FECAERequest());        
+//        FECAESolicitar sol = new FECAESolicitar();
+//        sol.setAuth(new FEAuthRequest());
+//        sol.setFeCAEReq(new FECAERequest());        
 
         // Add a Sign of the Data to the Message
         CMSSignedData signed = gen.generate(data, true, "BC");

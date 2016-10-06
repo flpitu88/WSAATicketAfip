@@ -82,34 +82,32 @@ public class wsaa_test {
         Long TicketTime = new Long(config.getProperty("TicketTime", "36000"));
 
         // Create LoginTicketRequest_xml_cms
-        byte[] LoginTicketRequest_xml_cms = afip_wsaa_client.create_cms(p12file, p12pass,
-                signer, dstDN, service, TicketTime);
-
+//        byte[] LoginTicketRequest_xml_cms = afip_wsaa_client.create_cms(p12file, p12pass,
+//                signer, dstDN, service, TicketTime);
         // Invoke AFIP wsaa and get LoginTicketResponse
         try {
-            LoginTicketResponse = afip_wsaa_client.invoke_wsaa(LoginTicketRequest_xml_cms, endpoint);
+//            LoginTicketResponse = afip_wsaa_client.invoke_wsaa(LoginTicketRequest_xml_cms, endpoint);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         // Get token & sign from LoginTicketResponse
         try {
-            Reader tokenReader = new StringReader(LoginTicketResponse);
-            Document tokenDoc = new SAXReader(false).read(tokenReader);
-
-            String token = tokenDoc.valueOf("/loginTicketResponse/credentials/token");
-            String sign = tokenDoc.valueOf("/loginTicketResponse/credentials/sign");
-
-            System.out.println("TOKEN: " + token);
-            System.out.println("SIGN: " + sign);
+//            Reader tokenReader = new StringReader(LoginTicketResponse);
+//            Document tokenDoc = new SAXReader(false).read(tokenReader);
+//
+//            String token = tokenDoc.valueOf("/loginTicketResponse/credentials/token");
+//            String sign = tokenDoc.valueOf("/loginTicketResponse/credentials/sign");
+//
+//            System.out.println("TOKEN: " + token);
+//            System.out.println("SIGN: " + sign);
 
             //
             // Make the actual call and assign the answer to a String
             //
-            byte[] TiposComprobantes_xml_cms = afip_wsaa_client.create_cmsTiposCompro(p12file, p12pass,
-                    signer, dstDN, service, token, sign, "20334428878");
-
-            LoginTicketResponse = afip_wsaa_client.invoke_wsfe(TiposComprobantes_xml_cms, "https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+//            byte[] TiposComprobantes_xml_cms = afip_wsaa_client.create_cmsTiposCompro(p12file, p12pass,
+//                    signer, dstDN, service, token, sign, "20334428878");
+            LoginTicketResponse = afip_wsaa_client.invoke_wsfe(null, "https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
 
             System.out.println(LoginTicketResponse);
         } catch (Exception e) {
