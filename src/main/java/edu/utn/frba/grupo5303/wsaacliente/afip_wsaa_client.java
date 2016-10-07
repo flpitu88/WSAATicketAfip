@@ -53,7 +53,9 @@ import org.apache.axis.encoding.XMLType;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fev1.dif.afip.gov.ar.FECAEResponse;
 import fev1.dif.afip.gov.ar.FECAESolicitarResponse;
+import fev1.dif.afip.gov.ar.FECompUltimoAutorizadoResponse;
 import fev1.dif.afip.gov.ar.FEParamGetTiposCbteResponse;
+import fev1.dif.afip.gov.ar.FERecuperaLastCbteResponse;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -474,5 +476,74 @@ public class afip_wsaa_client {
                 + "</soap:Body>"
                 + "</soap:Envelope>";
         return (datos);
+    }
+
+    static int invokeGetUltimoComprobante() {
+        int ultComprobante = 0;
+        try {
+
+            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxMjQyMjEzMjgwIiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTg1ODU4MSIgZXhwX3RpbWU9IjE0NzU5MDE4NDEiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+            String sign = "MN0dfbOLRZDSn6EhUIh8uxe4RwMQSoHWezaoy7U9GPODzWkiYFeGIM+8FuG8878Zc9XFCWM3UHnhdFgxvVgdpomr2VMPWFYxomYTvWEYYLGE5Uh1C+lzyLBUyrM2JJ+1C4Lf0maeDdRMKhCYT32sBt08gO3DbPFOwnpkPnNOu+0=";
+            String cuit = "20334428878";
+
+            String soapXml = generarXMLUltimoComprobante(token, sign, cuit);
+            URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+            URLConnection conn = url.openConnection();
+
+// Set the necessary header fields
+            conn.setRequestProperty("SOAPAction", "http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado");
+            conn.setRequestProperty("Content-type", "application/soap+xml;charset=UTF-8;action=\"http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado");
+            conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+            conn.setDoOutput(true);
+// Send the request
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(soapXml);
+            wr.flush();
+// Read the response
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+//            while ((line = rd.readLine()) != null) {
+//                System.out.println(line);
+//                /*jEdit: print(line); */ }
+            line = rd.readLine();
+
+            XMLInputFactory xif = XMLInputFactory.newFactory();
+            XMLStreamReader xsr = xif.createXMLStreamReader(new StringReader(line));
+            xsr.nextTag(); // Advance to Envelope tag
+            xsr.nextTag(); // Advance to Body tag
+            xsr.nextTag(); // Advance to getNumberResponse tag
+
+            JAXBContext jc = JAXBContext.newInstance(FECompUltimoAutorizadoResponse.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            JAXBElement<FECompUltimoAutorizadoResponse> je = unmarshaller.unmarshal(xsr, FECompUltimoAutorizadoResponse.class);
+
+            FECompUltimoAutorizadoResponse resp = je.getValue();
+
+            FERecuperaLastCbteResponse fresp = resp.getFECompUltimoAutorizadoResult();
+
+            ultComprobante = fresp.getCbteNro();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ultComprobante;
+    }
+
+    private static String generarXMLUltimoComprobante(String token, String sign, String cuit) {
+        String datos;
+        datos = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\">"
+                + "<soap:Header/>"
+                + "<soap:Body>"
+                + "<ar:FECompUltimoAutorizado>"
+                + "<ar:Auth>"
+                + "<ar:Token>" + token + "</ar:Token>"
+                + "<ar:Sign>" + sign + "</ar:Sign>"
+                + "<ar:Cuit>" + cuit + "</ar:Cuit>"
+                + "</ar:Auth>"
+                + "<ar:PtoVta>12</ar:PtoVta>"
+                + "<ar:CbteTipo>1</ar:CbteTipo>"
+                + "</ar:FECompUltimoAutorizado>"
+                + "</soap:Body>"
+                + "</soap:Envelope>";
+        return datos;
     }
 }

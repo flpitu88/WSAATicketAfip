@@ -108,9 +108,12 @@ public class wsaa_test {
 //            byte[] TiposComprobantes_xml_cms = afip_wsaa_client.create_cmsTiposCompro(p12file, p12pass,
 //                    signer, dstDN, service, token, sign, "20334428878");
 //            LoginTicketResponse = afip_wsaa_client.invoke_wsfe(null, "https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
-            String resp = afip_wsaa_client.invoke_CAE();
+//            String resp = afip_wsaa_client.invoke_CAE();
 
-            System.out.println(resp);
+            int ultimo = afip_wsaa_client.invokeGetUltimoComprobante();
+//            System.out.println(resp);
+            
+            System.out.println(ultimo);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e);
