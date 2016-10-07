@@ -51,18 +51,21 @@ import org.apache.axis.encoding.Base64;
 import org.apache.axis.encoding.XMLType;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import fev1.dif.afip.gov.ar.FECAEResponse;
+import fev1.dif.afip.gov.ar.FECAESolicitarResponse;
+import fev1.dif.afip.gov.ar.FEParamGetTiposCbteResponse;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.rmi.RemoteException;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.rpc.ParameterMode;
-import javax.xml.rpc.ServiceException;
-import javax.xml.soap.MimeHeaders;
-import org.apache.axis.MessageContext;
-import org.apache.axis.SOAPPart;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
 import org.bouncycastle.cms.CMSProcessable;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
@@ -310,30 +313,6 @@ public class afip_wsaa_client {
         String LoginTicketResponse = null;
         try {
 
-//            Service service = new Service();
-//            Call call = (Call) service.createCall();
-//
-//            //
-//            // Prepare the call for the Web service
-//            //
-//            call.setTargetEndpointAddress(new java.net.URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx"));
-//            call.setOperationName("FEParamGetTiposCbte");
-//            call.addParameter("request", XMLType.XSD_STRING, ParameterMode.IN);
-//            call.setReturnType(XMLType.XSD_STRING);
-//
-//            call.setSOAPActionURI("http://ar.gov.afip.dif.FEV1/FEParamGetTiposCbte");
-//            call.setProperty(
-//                    org.apache.axis.client.Call.SESSION_MAINTAIN_PROPERTY,
-//                    new Boolean(true));
-//            call.setProperty(
-//                    org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE2,
-//                    "\r\nSOAPAction: " + call.getSOAPActionURI());
-//
-//            //
-//            // Make the actual call and assign the answer to a String
-//            //
-//            LoginTicketResponse = (String) call.invoke(new Object[]{
-//                Base64.encode(PedidoComprobantes)});
             String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNzczODEzMTQ0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTc5MTk0MiIgZXhwX3RpbWU9IjE0NzU4MzUyMDIiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
             String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
             String cuit = "20334428878";
@@ -354,13 +333,146 @@ public class afip_wsaa_client {
 // Read the response
             BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line;
-            while ((line = rd.readLine()) != null) {
-                System.out.println(line);
-                /*jEdit: print(line); */ }
+//            while ((line = rd.readLine()) != null) {
+//                System.out.println(line);
+//                /*jEdit: print(line); */ }
+            line = rd.readLine();
 
+            XMLInputFactory xif = XMLInputFactory.newFactory();
+            XMLStreamReader xsr = xif.createXMLStreamReader(new StringReader(line));
+            xsr.nextTag(); // Advance to Envelope tag
+            xsr.nextTag(); // Advance to Body tag
+            xsr.nextTag(); // Advance to getNumberResponse tag
+            System.out.println(xsr.getNamespaceContext().getNamespaceURI("ns"));
+
+            JAXBContext jc = JAXBContext.newInstance(FEParamGetTiposCbteResponse.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            JAXBElement<FEParamGetTiposCbteResponse> je = unmarshaller.unmarshal(xsr, FEParamGetTiposCbteResponse.class);
+
+            je.toString();
+            FEParamGetTiposCbteResponse resp = je.getValue();
+
+            resp.getFEParamGetTiposCbteResult();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return (LoginTicketResponse);
+    }
+
+    static String invoke_CAE() {
+        String respuestaCAE = null;
+        try {
+
+            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNzczODEzMTQ0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTc5MTk0MiIgZXhwX3RpbWU9IjE0NzU4MzUyMDIiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+            String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
+            String cuit = "20334428878";
+
+            String soapXml = generarXMLPedido(token, sign, cuit);
+            URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+            URLConnection conn = url.openConnection();
+
+// Set the necessary header fields
+            conn.setRequestProperty("SOAPAction", "https://ar.gov.afip.dif.FEV1/FECAESolicitar");
+            conn.setRequestProperty("Content-type", "application/soap+xml;charset=UTF-8;action=\"http://ar.gov.afip.dif.FEV1/FECAESolicitar\"");
+            conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+            conn.setDoOutput(true);
+// Send the request
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(soapXml);
+            wr.flush();
+// Read the response
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+//            while ((line = rd.readLine()) != null) {
+//                System.out.println(line);
+//                /*jEdit: print(line); */ }
+            line = rd.readLine();
+
+            XMLInputFactory xif = XMLInputFactory.newFactory();
+            XMLStreamReader xsr = xif.createXMLStreamReader(new StringReader(line));
+//            xsr.nextTag(); // Advance to Envelope tag
+//            xsr.nextTag(); // Advance to Body tag
+//            xsr.nextTag(); // Advance to getNumberResponse tag
+//            System.out.println(xsr.getNamespaceContext().getNamespaceURI("ns"));
+
+            JAXBContext jc = JAXBContext.newInstance(FECAESolicitarResponse.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            JAXBElement<FECAESolicitarResponse> je = unmarshaller.unmarshal(xsr, FECAESolicitarResponse.class);
+
+            FECAESolicitarResponse resp = je.getValue();
+
+            FECAEResponse fresp = resp.getFECAESolicitarResult();
+
+            respuestaCAE = fresp.getFeDetResp().getFECAEDetResponse().get(0).getCAE();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return respuestaCAE;
+    }
+
+    private static String generarXMLPedido(String token, String sign, String cuit) {
+        String datos;
+        datos = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\">"
+                + "<soap:Header/>"
+                + "<soap:Body>"
+                + "<ar:FECAESolicitar>"
+                + "<ar:Auth>"
+                + "<ar:Token>" + token + "</ar:Token>"
+                + "<ar:Sign>" + sign + "</ar:Sign>"
+                + "<ar:Cuit>" + cuit + "</ar:Cuit>"
+                + "</ar:Auth>"
+                + "<ar:FeCAEReq>"
+                + "<ar:FeCabReq>"
+                + "<ar:CantReg>1</ar:CantReg>"
+                + "<ar:PtoVta>12</ar:PtoVta>"
+                + "<ar:CbteTipo>1</ar:CbteTipo>"
+                + "</ar:FeCabReq>"
+                + "<ar:FeDetReq>"
+                + "<ar:FECAEDetRequest>"
+                + "<ar:Concepto>1</ar:Concepto>"
+                + "<ar:DocTipo>80</ar:DocTipo>"
+                + "<ar:DocNro>20111111112</ar:DocNro>"
+                + "<ar:CbteDesde>5</ar:CbteDesde>"
+                + "<ar:CbteHasta>5</ar:CbteHasta>"
+                + "<ar:CbteFch>20161007</ar:CbteFch>"
+                + "<ar:ImpTotal>184.05</ar:ImpTotal>"
+                + "<ar:ImpTotConc>0</ar:ImpTotConc>"
+                + "<ar:ImpNeto>150</ar:ImpNeto>"
+                + "<ar:ImpOpEx>0</ar:ImpOpEx>"
+                + "<ar:ImpTrib>7.8</ar:ImpTrib>"
+                + "<ar:ImpIVA>26.25</ar:ImpIVA>"
+                + "<ar:FchServDesde></ar:FchServDesde>"
+                + "<ar:FchServHasta></ar:FchServHasta>"
+                + "<ar:FchVtoPago></ar:FchVtoPago>"
+                + "<ar:MonId>PES</ar:MonId>"
+                + "<ar:MonCotiz>1</ar:MonCotiz>"
+                + "<ar:Tributos>"
+                + "<ar:Tributo>"
+                + "<ar:Id>99</ar:Id>"
+                + "<ar:Desc>Impuesto Municipal Matanza</ar:Desc>"
+                + "<ar:BaseImp>150</ar:BaseImp>"
+                + "<ar:Alic>5.2</ar:Alic>"
+                + "<ar:Importe>7.8</ar:Importe>"
+                + "</ar:Tributo>"
+                + "</ar:Tributos>"
+                + "<ar:Iva>"
+                + "<ar:AlicIva>"
+                + "<ar:Id>5</ar:Id>"
+                + "<ar:BaseImp>100</ar:BaseImp>"
+                + "<ar:Importe>21</ar:Importe>"
+                + "</ar:AlicIva>"
+                + "<ar:AlicIva>"
+                + "<ar:Id>4</ar:Id>"
+                + "<ar:BaseImp>50</ar:BaseImp>"
+                + "<ar:Importe>5.25</ar:Importe>"
+                + "</ar:AlicIva>"
+                + "</ar:Iva>"
+                + "</ar:FECAEDetRequest>"
+                + "</ar:FeDetReq>"
+                + "</ar:FeCAEReq>"
+                + "</ar:FECAESolicitar>"
+                + "</soap:Body>"
+                + "</soap:Envelope>";
+        return (datos);
     }
 }
