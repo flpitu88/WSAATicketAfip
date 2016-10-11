@@ -61,6 +61,7 @@ import fev1.dif.afip.gov.ar.FECAERequest;
 import fev1.dif.afip.gov.ar.FECAEResponse;
 import fev1.dif.afip.gov.ar.FECAESolicitar;
 import fev1.dif.afip.gov.ar.FECAESolicitarResponse;
+import fev1.dif.afip.gov.ar.FECompUltimoAutorizado;
 import fev1.dif.afip.gov.ar.FECompUltimoAutorizadoResponse;
 import fev1.dif.afip.gov.ar.FEParamGetTiposCbteResponse;
 import fev1.dif.afip.gov.ar.FERecuperaLastCbteResponse;
@@ -87,6 +88,9 @@ import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class afip_wsaa_client {
+
+    private static String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSI0MTcyMTQ2Mjg2IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NjE5MTkwNiIgZXhwX3RpbWU9IjE0NzYyMzUxNjYiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+    private static String sign = "V/HI/0cvXRKrQsApt7gxLco9/RpGzU/lvMzmLKYF2t20TxObyv9hIy60z/f5fCxjCyhYcX8MQLT363LG2bHt/KwlbfNjLKQL4WrD3lYAC++QAvffpTI3B8UhSEDpYWe39vN1S2R8frnD0ufIeR1LVb0dZ647hgezuxl1eyy4cRY=";
 
     static String invoke_wsaa(byte[] LoginTicketRequest_xml_cms, String endpoint) throws Exception {
 
@@ -226,7 +230,7 @@ public class afip_wsaa_client {
         return (LoginTicketRequest_xml);
     }
 
-    private static String getXmlFEParamGetTiposCbte(String aToken, String aSing, String aCuit) {
+    private static String getXmlFEParamGetTiposCbte(String aCuit) {
 
         String FEParamGetTiposCbte_xml;
 
@@ -234,8 +238,8 @@ public class afip_wsaa_client {
                 + "<soap12:Body>"
                 + "<FEParamGetTiposCbte xmlns=\"http://ar.gov.afip.dif.FEV1/\">"
                 + "<Auth>"
-                + "<Token>" + aToken + "</Token>"
-                + "<Sign>" + aSing + "</Sign>"
+                + "<Token>" + token + "</Token>"
+                + "<Sign>" + sign + "</Sign>"
                 + "<Cuit>" + aCuit + "</Cuit>"
                 + "</Auth>"
                 + "</FEParamGetTiposCbte>"
@@ -249,8 +253,7 @@ public class afip_wsaa_client {
     // Create the CMS Message
     //
     public static byte[] create_cmsTiposCompro(String p12file, String p12pass,
-            String signer, String dstDN, String service,
-            String token, String sign, String cuit) {
+            String signer, String dstDN, String service, String cuit) {
 
         PrivateKey pKey = null;
         X509Certificate pCertificate = null;
@@ -290,7 +293,7 @@ public class afip_wsaa_client {
         //
         // Create XML Message
         // 
-        PedidoTiposComprobantes_xml = getXmlFEParamGetTiposCbte(token, sign, cuit);
+        PedidoTiposComprobantes_xml = getXmlFEParamGetTiposCbte(cuit);
 
         //
         // Create CMS Message
@@ -326,12 +329,9 @@ public class afip_wsaa_client {
 
         String LoginTicketResponse = null;
         try {
-
-            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNzczODEzMTQ0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTc5MTk0MiIgZXhwX3RpbWU9IjE0NzU4MzUyMDIiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
-            String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
             String cuit = "20334428878";
 
-            String soapXml = getXmlFEParamGetTiposCbte(token, sign, cuit);
+            String soapXml = getXmlFEParamGetTiposCbte(cuit);
             URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
             URLConnection conn = url.openConnection();
 
@@ -376,9 +376,6 @@ public class afip_wsaa_client {
     static String invoke_CAE() {
         String respuestaCAE = null;
         try {
-
-            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxNzczODEzMTQ0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTc5MTk0MiIgZXhwX3RpbWU9IjE0NzU4MzUyMDIiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
-            String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
             String cuit = "20334428878";
 
             String soapXml = generarXMLPedidoCAE();
@@ -423,7 +420,7 @@ public class afip_wsaa_client {
         return respuestaCAE;
     }
 
-    private static String generarXMLPedido(String token, String sign, String cuit) {
+    private static String generarXMLPedido(String cuit) {
         String datos;
         datos = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\">"
                 + "<soap:Header/>"
@@ -490,9 +487,6 @@ public class afip_wsaa_client {
     }
 
     public static String generarXMLPedidoCAE() throws PropertyException, JAXBException {
-        String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSI0MTcyMTQ2Mjg2IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NjE5MTkwNiIgZXhwX3RpbWU9IjE0NzYyMzUxNjYiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
-        String sign = "V/HI/0cvXRKrQsApt7gxLco9/RpGzU/lvMzmLKYF2t20TxObyv9hIy60z/f5fCxjCyhYcX8MQLT363LG2bHt/KwlbfNjLKQL4WrD3lYAC++QAvffpTI3B8UhSEDpYWe39vN1S2R8frnD0ufIeR1LVb0dZ647hgezuxl1eyy4cRY=";
-
         FECAESolicitar req = new FECAESolicitar();
         FECAERequest feCAEReq = new FECAERequest();
         FEAuthRequest auth = new FEAuthRequest();
@@ -541,7 +535,7 @@ public class afip_wsaa_client {
         iva.setImporte(21);
         listIva.getAlicIva().add(iva);
         detail1.setIva(listIva);
-        
+
         array.getFECAEDetRequest().add(detail1);
         feCAEReq.setFeDetReq(array);
 
@@ -568,12 +562,10 @@ public class afip_wsaa_client {
     static int invokeGetUltimoComprobante() {
         int ultComprobante = 0;
         try {
-
-            String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIxMjQyMjEzMjgwIiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NTg1ODU4MSIgZXhwX3RpbWU9IjE0NzU5MDE4NDEiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
-            String sign = "MN0dfbOLRZDSn6EhUIh8uxe4RwMQSoHWezaoy7U9GPODzWkiYFeGIM+8FuG8878Zc9XFCWM3UHnhdFgxvVgdpomr2VMPWFYxomYTvWEYYLGE5Uh1C+lzyLBUyrM2JJ+1C4Lf0maeDdRMKhCYT32sBt08gO3DbPFOwnpkPnNOu+0=";
             String cuit = "20334428878";
 
-            String soapXml = generarXMLUltimoComprobante(token, sign, cuit);
+//            String soapXml = generarXMLUltimoComprobante(cuit);
+            String soapXml = generarXMLUltimoComprobanteClases();
             URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
             URLConnection conn = url.openConnection();
 
@@ -615,7 +607,7 @@ public class afip_wsaa_client {
         return ultComprobante;
     }
 
-    private static String generarXMLUltimoComprobante(String token, String sign, String cuit) {
+    private static String generarXMLUltimoComprobante(String cuit) {
         String datos;
         datos = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\">"
                 + "<soap:Header/>"
@@ -632,5 +624,34 @@ public class afip_wsaa_client {
                 + "</soap:Body>"
                 + "</soap:Envelope>";
         return datos;
+    }
+
+    public static String generarXMLUltimoComprobanteClases() throws JAXBException {
+        FECompUltimoAutorizado req = new FECompUltimoAutorizado();
+        FEAuthRequest auth = new FEAuthRequest();
+        // Configuracion de autorizacion
+        auth.setCuit(20334428878l);
+        auth.setToken(token);
+        auth.setSign(sign);
+        req.setAuth(auth);
+
+        req.setCbteTipo(6);
+        req.setPtoVta(12);
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(FECompUltimoAutorizado.class);
+        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+
+        // output pretty printed
+        jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+        StringWriter sw = new StringWriter();
+        jaxbMarshaller.marshal(req, sw);
+        String xmlString = sw.toString();
+        
+        String nuevoEncabezado = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\"><soap:Header/><soap:Body>";
+        String exEncabezado = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>";
+        String pedido = xmlString.replace(exEncabezado, nuevoEncabezado);
+
+        return pedido + "</soap:Body></soap:Envelope>";
     }
 }
