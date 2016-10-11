@@ -51,7 +51,15 @@ import org.apache.axis.encoding.Base64;
 import org.apache.axis.encoding.XMLType;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import fev1.dif.afip.gov.ar.AlicIva;
+import fev1.dif.afip.gov.ar.ArrayOfAlicIva;
+import fev1.dif.afip.gov.ar.ArrayOfFECAEDetRequest;
+import fev1.dif.afip.gov.ar.FEAuthRequest;
+import fev1.dif.afip.gov.ar.FECAECabRequest;
+import fev1.dif.afip.gov.ar.FECAEDetRequest;
+import fev1.dif.afip.gov.ar.FECAERequest;
 import fev1.dif.afip.gov.ar.FECAEResponse;
+import fev1.dif.afip.gov.ar.FECAESolicitar;
 import fev1.dif.afip.gov.ar.FECAESolicitarResponse;
 import fev1.dif.afip.gov.ar.FECompUltimoAutorizadoResponse;
 import fev1.dif.afip.gov.ar.FEParamGetTiposCbteResponse;
@@ -60,10 +68,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.rpc.ParameterMode;
 import javax.xml.stream.XMLInputFactory;
@@ -369,7 +381,7 @@ public class afip_wsaa_client {
             String sign = "a+1hvBVaiJKn1f/hisPo7lXpxqtTkhp4CG/dN1upkjjYL+6LqIfsk58dWE+TBr6brXapZCN8ESoQpseNdOU/NlzSve3rd4kJuGSfHzc99b8zGjT6UxuNGrskBtVdRpdaRqhgtdJUEUx3BipqK4MC252ShzVoZZmoDO1gs7LTQrU=";
             String cuit = "20334428878";
 
-            String soapXml = generarXMLPedido(token, sign, cuit);
+            String soapXml = generarXMLPedidoCAE();
             URL url = new URL("https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
             URLConnection conn = url.openConnection();
 
@@ -392,10 +404,9 @@ public class afip_wsaa_client {
 
             XMLInputFactory xif = XMLInputFactory.newFactory();
             XMLStreamReader xsr = xif.createXMLStreamReader(new StringReader(line));
-//            xsr.nextTag(); // Advance to Envelope tag
-//            xsr.nextTag(); // Advance to Body tag
-//            xsr.nextTag(); // Advance to getNumberResponse tag
-//            System.out.println(xsr.getNamespaceContext().getNamespaceURI("ns"));
+            xsr.nextTag(); // Advance to Envelope tag
+            xsr.nextTag(); // Advance to Body tag
+            xsr.nextTag(); // Advance to getNumberResponse tag
 
             JAXBContext jc = JAXBContext.newInstance(FECAESolicitarResponse.class);
             Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -476,6 +487,82 @@ public class afip_wsaa_client {
                 + "</soap:Body>"
                 + "</soap:Envelope>";
         return (datos);
+    }
+
+    public static String generarXMLPedidoCAE() throws PropertyException, JAXBException {
+        String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSI0MTcyMTQ2Mjg2IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NjE5MTkwNiIgZXhwX3RpbWU9IjE0NzYyMzUxNjYiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+        String sign = "V/HI/0cvXRKrQsApt7gxLco9/RpGzU/lvMzmLKYF2t20TxObyv9hIy60z/f5fCxjCyhYcX8MQLT363LG2bHt/KwlbfNjLKQL4WrD3lYAC++QAvffpTI3B8UhSEDpYWe39vN1S2R8frnD0ufIeR1LVb0dZ647hgezuxl1eyy4cRY=";
+
+        FECAESolicitar req = new FECAESolicitar();
+        FECAERequest feCAEReq = new FECAERequest();
+        FEAuthRequest auth = new FEAuthRequest();
+
+        FECAECabRequest cabReq = new FECAECabRequest();
+
+        ArrayOfFECAEDetRequest array = new ArrayOfFECAEDetRequest();
+
+        FECAEDetRequest detail1 = new FECAEDetRequest();
+        FECAEDetRequest detail2 = new FECAEDetRequest();
+
+        // Configuracion de autorizacion
+        auth.setCuit(20334428878l);
+        auth.setToken(token);
+        auth.setSign(sign);
+        req.setAuth(auth);
+
+        // Configuracion de cabecera de pedido
+        cabReq.setCbteTipo(6);
+        cabReq.setPtoVta(12);
+        cabReq.setCantReg(1);
+        feCAEReq.setFeCabReq(cabReq);
+
+        // Configuracion de un item de detalle
+        detail1.setConcepto(2);
+        detail1.setDocTipo(86);
+        detail1.setDocNro(20111111112l);
+        detail1.setCbteDesde(2);
+        detail1.setCbteHasta(2);
+        detail1.setImpTotal(121);
+        detail1.setImpTotConc(0);
+        detail1.setImpNeto(100);
+        detail1.setImpOpEx(0);
+        detail1.setImpIVA(21);
+        detail1.setImpTrib(0);
+        detail1.setMonId("PES");
+        detail1.setMonCotiz(1);
+        detail1.setCbteFch("20161011");
+        detail1.setFchServDesde("20161004");
+        detail1.setFchServHasta("20161005");
+        detail1.setFchVtoPago("20161015");
+        ArrayOfAlicIva listIva = new ArrayOfAlicIva();
+        AlicIva iva = new AlicIva();
+        iva.setBaseImp(100);
+        iva.setId(5);
+        iva.setImporte(21);
+        listIva.getAlicIva().add(iva);
+        detail1.setIva(listIva);
+        
+        array.getFECAEDetRequest().add(detail1);
+        feCAEReq.setFeDetReq(array);
+
+        req.setFeCAEReq(feCAEReq);
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(FECAESolicitar.class);
+        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+
+// output pretty printed
+        jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+        StringWriter sw = new StringWriter();
+        jaxbMarshaller.marshal(req, sw);
+        jaxbMarshaller.marshal(req, System.out);
+        String xmlString = sw.toString();
+
+        String nuevoEncabezado = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\"><soap:Header/><soap:Body>";
+        String exEncabezado = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>";
+        String pedido = xmlString.replace(exEncabezado, nuevoEncabezado);
+
+        return pedido + "</soap:Body></soap:Envelope>";
     }
 
     static int invokeGetUltimoComprobante() {
