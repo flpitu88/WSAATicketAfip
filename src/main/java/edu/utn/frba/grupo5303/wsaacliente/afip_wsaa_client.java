@@ -89,8 +89,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class afip_wsaa_client {
 
-    private static String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSI0MTcyMTQ2Mjg2IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NjE5MTkwNiIgZXhwX3RpbWU9IjE0NzYyMzUxNjYiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
-    private static String sign = "V/HI/0cvXRKrQsApt7gxLco9/RpGzU/lvMzmLKYF2t20TxObyv9hIy60z/f5fCxjCyhYcX8MQLT363LG2bHt/KwlbfNjLKQL4WrD3lYAC++QAvffpTI3B8UhSEDpYWe39vN1S2R8frnD0ufIeR1LVb0dZ647hgezuxl1eyy4cRY=";
+    private static String token = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIzMjg5NTIzMzA0IiBzcmM9IkNOPXdzYWFob21vLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTQ3NjI0MTMxMCIgZXhwX3RpbWU9IjE0NzYyODQ1NzAiIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMzQ0Mjg4NzgsIENOPWVudmlvbGlicmUiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIyMDMzNDQyODg3OCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK";
+    private static String sign = "VLESqFLONxG47riZZPayCAow1AWthW6RT+RIImmjeypeYEn8W+clXMKLpXLkKwzaJFXbN7jBWI7PztmP2rktxRgli1fcsbL9lWOp+Zl/fRF8pytaSE2z+3g12jDtxj6hsvafrcQdFWFn9I+us9rIXZmQ7cS5uAllk9ObImFlK5w=";
 
     static String invoke_wsaa(byte[] LoginTicketRequest_xml_cms, String endpoint) throws Exception {
 
@@ -588,9 +588,14 @@ public class afip_wsaa_client {
 
             XMLInputFactory xif = XMLInputFactory.newFactory();
             XMLStreamReader xsr = xif.createXMLStreamReader(new StringReader(line));
-            xsr.nextTag(); // Advance to Envelope tag
-            xsr.nextTag(); // Advance to Body tag
-            xsr.nextTag(); // Advance to getNumberResponse tag
+            xsr.nextTag();
+            while (!xsr.getLocalName().equals("FECompUltimoAutorizadoResponse")) {
+                xsr.nextTag();
+            }
+//            xsr.nextTag(); // Advance to Envelope tag
+//            xsr.nextTag(); // Advance to Body tag
+//            xsr.nextTag(); // Advance to getNumberResponse tag
+//            System.out.println("TIENE QUE SERRRRRRRRRRRRRRR: " + xsr.getLocalName());
 
             JAXBContext jc = JAXBContext.newInstance(FECompUltimoAutorizadoResponse.class);
             Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -647,7 +652,7 @@ public class afip_wsaa_client {
         StringWriter sw = new StringWriter();
         jaxbMarshaller.marshal(req, sw);
         String xmlString = sw.toString();
-        
+
         String nuevoEncabezado = "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:ar=\"http://ar.gov.afip.dif.FEV1/\"><soap:Header/><soap:Body>";
         String exEncabezado = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>";
         String pedido = xmlString.replace(exEncabezado, nuevoEncabezado);
